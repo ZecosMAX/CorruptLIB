@@ -12,21 +12,14 @@ namespace CorruptLIB
         static void Main(string[] args)
         {
             Random random = new Random();
-            Parser corruptor = new Parser("suckmyPAINIS.png", ImageType.PNG);
+            Parser parser = new Parser("suckmyPAINIS.png", ImageType.PNG);
+            PNGCorruptor corruptor = parser.CorruptorInstance as PNGCorruptor;
             while (true)
             {
-                Console.WriteLine(1 % 50);
-
-                List<Chunk> res = (List<Chunk>)corruptor.ParsePNG();
-                for (int i = 0; i < res.Count; i++)
-                    if (i > 4 & new String(res[i].Type) == "IDAT")
-                    {
-                        res[i].Slide(2);
-                        res[i].RecalcCrc();
-                    }
+                corruptor.Corrupt(PNGCorruptType.SingleChange, 10, 1);
                 //res[5].Slide(4);
                 //res[5].recalcCrc();
-                corruptor.BuildPNG(res.ToArray());
+                parser.BuildPNG();
 
                 Console.Write("Again? "); var r = Console.ReadLine();
                 if (r == "n")

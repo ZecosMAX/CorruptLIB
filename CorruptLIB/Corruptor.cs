@@ -17,6 +17,16 @@ namespace ZecosMAX.Corrupt
           System.Runtime.Serialization.SerializationInfo info,
           System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
+    public class WrongCountOfParametersException : Exception
+    {
+        public WrongCountOfParametersException() { }
+        public WrongCountOfParametersException(string message) : base(message) { }
+        public WrongCountOfParametersException(string message, Exception inner) : base(message, inner) { }
+        protected WrongCountOfParametersException(
+          System.Runtime.Serialization.SerializationInfo info,
+          System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+    }
+
     struct CorruptState
     {
         private string message;
@@ -65,6 +75,8 @@ namespace ZecosMAX.Corrupt
         public CorruptState Corrupt(PNGCorruptType corruptType, params int[] additional)
         {
             CorruptState res;
+            int byteChanged = 0;
+            int chunkCounter = 0;
             switch (corruptType)
             {
                 case PNGCorruptType.ForwardSwap:
@@ -80,23 +92,46 @@ namespace ZecosMAX.Corrupt
                 case PNGCorruptType.SingleChange:
                     foreach (var item in chunks)
                     {
-                        if (additional != null)
+                        if (additional.Length == 2)
                         {
-                            //somehow parse params in additional
+                            int byteCount = additional[0] == 0 ? -1 : additional[0];
+                            int chunkCount = additional[1] == 0 ? -1 : additional[1];
+                            if (new string(item.Type).ToLower() == "idat")
+                            {
+                                if ((chunkCounter+1) > chunkCount & chunkCount != -1) break;
+                                Console.WriteLine(chunkCounter);
+                                if (chunkCount != -1) chunkCounter++;
+                                if (byteCount != -1) for (int i = 0; i < byteCount; i++)
+                                {
+                                    item.Change(); byteChanged++;
+                                        
+                                }
+                                else
+                                {
+                                    item.Change(); byteChanged++;
+                                }
+                                item.RecalcCrc();
+                            }
                         }
-                        else
+                        else if (additional.Length == 0)
                         {
-                            if (new string(item.Type).ToLower() == "idat") {
+                            if (new string(item.Type).ToLower() == "idat")
+                            {
                                 item.Change();
                                 item.RecalcCrc();
                             }
                         }
+                        else
+                        {
+                            throw new WrongCountOfParametersException("Count of specified parameters must be exactly 2");
+                        }
+                        
                     }
                     break;
                 default:
                     break;
             }
-            res = new CorruptState("", 0, 0);
+            res = new CorruptState("", 0, byteChanged);
             return res;
         }
         private void SlideCorrupt(int offset, int numOfIDAT = 1)
@@ -263,6 +298,7 @@ namespace ZecosMAX.Corrupt
     {
         private Corruptor corruptorInstance;
         private string path;
+        private List<PNGChunk> r;
 
         internal Corruptor CorruptorInstance { get => corruptorInstance; set => corruptorInstance = value; }
 
@@ -280,6 +316,8 @@ namespace ZecosMAX.Corrupt
                     break;
                 case ImageType.PNG:
                     this.corruptorInstance = new PNGCorruptor();
+                    r = ParsePNG();
+                    (this.corruptorInstance as PNGCorruptor).Chunks = r.ToArray();
                     break;
                 case ImageType.BMP:
                     break;
@@ -297,7 +335,7 @@ namespace ZecosMAX.Corrupt
             FileStream fs = new FileStream(path, FileMode.Open);
             int hexIn;
 
-            List<Chunk> Chunks = new List<Chunk>();
+            List<PNGChunk> Chunks = new List<PNGChunk>();
 
             byte[] hex = new byte[fs.Length];
 
@@ -350,7 +388,7 @@ namespace ZecosMAX.Corrupt
                     offset + 3, crc[3]
                     );
 
-                Chunk chunk = new Chunk(dataLength, type.ToCharArray(), data, crc);
+                PNGChunk chunk = new PNGChunk(dataLength, type.ToCharArray(), data, crc);
 
                 //chunk.length = dataLength;
                 //chunk.type = type.ToCharArray();
@@ -366,13 +404,37 @@ namespace ZecosMAX.Corrupt
         /// </summary>
         /// <param name="chunks">A array of chunks, basically containing all of it's information (except PNG signature) and they are must be in right order</param>
         /// <param name="path">A path, where file will be created, if it's null then new file will be created in the same directory where executable is with name "builded.png"</param>
-        public void BuildPNG(PNGChunk[] chunks, string path = null)
+        static public void BuildPNG(PNGChunk[] chunks, string path = null)
         {
             
             //PNGSIG: 89 50 4E 47 0D 0A 1A 0A or 137, 80, 78, 71, 13, 10, 26, 10
             List<byte> bytes = new List<byte>();
             bytes.AddRange(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 });
             foreach(var item in chunks)
+            {
+                bytes.AddRange(BitConverter.GetBytes(item.Length).Reverse());
+                bytes.AddRange(Encoding.ASCII.GetBytes(item.Type));
+                bytes.AddRange(item.Data);
+                bytes.AddRange(item.CRC);
+            }
+            if (path != null)
+            {
+                FileStream fs = new FileStream(path, FileMode.Create);
+                fs.Write(bytes.ToArray(), 0, bytes.Count);
+                fs.Close();
+            }
+            else
+            {
+                File.WriteAllBytes("builded.png", bytes.ToArray());
+            }
+        }
+        public void BuildPNG(string path = null)
+        {
+
+            //PNGSIG: 89 50 4E 47 0D 0A 1A 0A or 137, 80, 78, 71, 13, 10, 26, 10
+            List<byte> bytes = new List<byte>();
+            bytes.AddRange(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 });
+            foreach (var item in r)
             {
                 bytes.AddRange(BitConverter.GetBytes(item.Length).Reverse());
                 bytes.AddRange(Encoding.ASCII.GetBytes(item.Type));
