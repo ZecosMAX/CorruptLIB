@@ -7,6 +7,10 @@ using ZecosMAX.Corrupt;
 
 namespace CorruptLIB
 {
+    /// <summary>
+    /// This Class is only for a test properties
+    /// it needs to compile only one file - Corruptor.cs
+    /// </summary>
     class Program
     {
         static void Main(string[] args)
