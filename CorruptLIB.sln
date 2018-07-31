@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2008
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CorruptLIB", "CorruptLIB\CorruptLIB.csproj", "{3ECF3F61-E860-4BCA-831D-60A5ACE54E8A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3ECF3F61-E860-4BCA-831D-60A5ACE54E8A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3ECF3F61-E860-4BCA-831D-60A5ACE54E8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3ECF3F61-E860-4BCA-831D-60A5ACE54E8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3ECF3F61-E860-4BCA-831D-60A5ACE54E8A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B02AC952-FBC9-4702-82BE-9BDE23160A85}
+	EndGlobalSection
+EndGlobal
