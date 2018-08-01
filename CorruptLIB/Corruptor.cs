@@ -65,7 +65,7 @@ namespace ZecosMAX.Corrupt
 
         public PNGCorruptor()
         {
-            Corrupt(PNGCorruptType.Slide);
+            //Corrupt(PNGCorruptType.Slide);
         }
         /// <summary>
         /// An main method to corrupt PNG
@@ -88,29 +88,83 @@ namespace ZecosMAX.Corrupt
                 case PNGCorruptType.AutoSwap:
                     break;
                 case PNGCorruptType.Slide:
+                    foreach (var item in chunks)
+                    {
+                        if (additional.Length == 3)
+                        {
+                            bool isTarget = Convert.ToBoolean(additional[2]);
+                            int slideOffset = additional[0] == 0 ? 1 : additional[0];
+                            int chunkCount = additional[1] == 0 ? -1 : additional[1];
+                            if (new string(item.Type).ToLower() == "idat")
+                            { 
+                                if (chunkCount != -1) chunkCounter++;
+                                if (!isTarget)
+                                {
+                                    Console.WriteLine(isTarget);
+                                    if ((chunkCounter + 1) > chunkCount & chunkCount != -1) break;
+                                    item.Slide(slideOffset);
+                                    item.RecalcCrc();
+                                }
+                                else
+                                {
+                                    if ((chunkCounter) == chunkCount & chunkCount != -1) {
+                                        Console.WriteLine(chunkCounter);
+                                        item.Slide(slideOffset);
+                                        item.RecalcCrc();
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        else if (additional.Length == 0)
+                        {
+                            if (new string(item.Type).ToLower() == "idat")
+                            {
+                                item.Slide(1);
+                                item.RecalcCrc();
+                            }
+                        }
+                        else
+                        {
+                            throw new WrongCountOfParametersException("Count of specified parameters must be exactly 3");
+                        }
+
+                    }
                     break;
                 case PNGCorruptType.SingleChange:
                     foreach (var item in chunks)
                     {
-                        if (additional.Length == 2)
+                        if (additional.Length == 3)
                         {
+                            bool isTarget = Convert.ToBoolean(additional[2]);
                             int byteCount = additional[0] == 0 ? -1 : additional[0];
                             int chunkCount = additional[1] == 0 ? -1 : additional[1];
                             if (new string(item.Type).ToLower() == "idat")
                             {
-                                if ((chunkCounter+1) > chunkCount & chunkCount != -1) break;
-                                Console.WriteLine(chunkCounter);
                                 if (chunkCount != -1) chunkCounter++;
-                                if (byteCount != -1) for (int i = 0; i < byteCount; i++)
-                                {
-                                    item.Change(); byteChanged++;
-                                        
-                                }
-                                else
-                                {
-                                    item.Change(); byteChanged++;
-                                }
-                                item.RecalcCrc();
+                                if (!isTarget) {
+                                    if ((chunkCounter + 1) > chunkCount & chunkCount != -1) break;
+                                    Console.WriteLine(chunkCounter);
+                                    if (byteCount != -1) for (int i = 0; i < byteCount; i++)
+                                        {
+                                            item.Change(); byteChanged++;
+
+                                        }
+                                    else
+                                    {
+                                        item.Change(); byteChanged++;
+                                    }
+                                    item.RecalcCrc();
+                                }      
+                                else {
+                                    if ((chunkCounter) == chunkCount & chunkCount != -1) {
+                                        Console.WriteLine(chunkCounter);
+                                        item.Change();
+                                        byteChanged++;
+                                        item.RecalcCrc();
+                                        break;
+                                    }
+                                } 
                             }
                         }
                         else if (additional.Length == 0)
@@ -123,7 +177,7 @@ namespace ZecosMAX.Corrupt
                         }
                         else
                         {
-                            throw new WrongCountOfParametersException("Count of specified parameters must be exactly 2");
+                            throw new WrongCountOfParametersException("Count of specified parameters must be exactly 3");
                         }
                         
                     }

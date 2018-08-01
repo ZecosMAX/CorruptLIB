@@ -20,7 +20,7 @@ namespace CorruptLIB
             PNGCorruptor corruptor = parser.CorruptorInstance as PNGCorruptor;
             while (true)
             {
-                corruptor.Corrupt(PNGCorruptType.SingleChange, 10, 1);
+                corruptor.Corrupt(PNGCorruptType.Slide, 1, 5, 41);
                 //res[5].Slide(4);
                 //res[5].recalcCrc();
                 parser.BuildPNG();
