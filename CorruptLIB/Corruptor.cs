@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -46,7 +47,31 @@ namespace ZecosMAX.Corrupt
     }
     abstract class Corruptor
     {
+        public void Resave(string path)
+        {
+            FileStream fs = new FileStream(path, FileMode.Open, FileAccess.ReadWrite);
+            var r = Image.FromStream(fs);
+            fs.Close();
+            File.Delete(path);
+            Bitmap tmp = new Bitmap(r.Width, r.Height);
 
+            //MessageBox.Show(
+            //    "W: " + r.Width + "\n" +
+            //    "H: " + r.Height + "");
+
+            Graphics graphics = Graphics.FromImage(tmp);
+
+            graphics.DrawImage(r, 0, 0, r.Width, r.Height);
+
+
+            graphics.Save();
+            tmp.Save(path);
+
+            tmp.Dispose();
+            graphics.Dispose();
+
+            r.Dispose();
+        }
     }
     class PNGCorruptor : Corruptor
     {
@@ -72,7 +97,7 @@ namespace ZecosMAX.Corrupt
         /// An main method to corrupt PNG
         /// </summary>
         /// <param name="corruptType">Required parameter to specify type of corrupt</param>
-        /// <param name="additional"></param>
+        /// <param  name="additional"></param>
         public CorruptState Corrupt(PNGCorruptType corruptType, params int[] additional)
         {
             CorruptState res;
@@ -127,8 +152,44 @@ namespace ZecosMAX.Corrupt
                 case PNGCorruptType.Swap:
                     foreach (var item in chunks)
                     {
-                        if (additional.Length == 3)
+                        if (additional.Length == 4)
                         {
+                            bool isTarget = Convert.ToBoolean(additional[3]);
+                            int first = additional[0] == 0 ?  -1 : additional[0];
+                            int second = additional[0] == 0 ? -1 : additional[1];
+                            int chunkCount = additional[1] == 0 ? -1 : additional[2];
+                            if (new string(item.Type).ToLower() == "idat")
+                            {
+                                if (chunkCount != -1) chunkCounter++;
+                                if (!isTarget)
+                                {
+                                    if(first == -1)
+                                        first = random.Next(0, item.Data.Length);
+
+                                    if (second == -1)
+                                        second = random.Next(0, item.Data.Length);
+
+                                    if ((chunkCounter + 1) > chunkCount & chunkCount != -1) break;
+                                    //Console.WriteLine("f:\t{0}\ns:\t{1}\nl:\t{2}", first, second, item.Data.Length);
+                                    Swap(first, second, item.Data);
+                                    item.RecalcCrc();
+                                }
+                                else
+                                {
+                                    if ((chunkCounter) == chunkCount & chunkCount != -1)
+                                    {
+                                        if (first == -1)
+                                            first = random.Next(0, item.Data.Length);
+
+                                        if (second == -1)
+                                            second = random.Next(0, item.Data.Length);
+
+                                        Swap(first, second, item.Data);
+                                        item.RecalcCrc();
+                                        break;
+                                    }
+                                }
+                            }
                         }
                         else if (additional.Length == 0)
                         {
@@ -138,11 +199,12 @@ namespace ZecosMAX.Corrupt
                                 int second = random.Next(0, item.Data.Length);
                                 Console.WriteLine("f:\t{0}\ns:\t{1}\nl:\t{2}", first, second, item.Data.Length);
                                 Swap(first, second, item.Data);
+                                item.RecalcCrc();
                             }
                         }
                         else
                         {
-                            throw new WrongCountOfParametersException("i'm so stupid, that i've throwed that randomly, sorry");
+                            throw new WrongCountOfParametersException("Count of specified parameters must be exactly 4");
                         }
                     }
                     break;
@@ -246,9 +308,6 @@ namespace ZecosMAX.Corrupt
             }
             res = new CorruptState("", 0, byteChanged);
             return res;
-        }
-        private void SwapCorrupt(int first, int second)
-        {
         }
     }
     /// <summary>
@@ -508,7 +567,7 @@ namespace ZecosMAX.Corrupt
         /// </summary>
         /// <param name="chunks">A array of chunks, basically containing all of it's information (except PNG signature) and they are must be in right order</param>
         /// <param name="path">A path, where file will be created, if it's null then new file will be created in the same directory where executable is with name "builded.png"</param>
-        static public void BuildPNG(PNGChunk[] chunks, string path = null)
+        public void BuildPNG(PNGChunk[] chunks, string path = null)
         {
             
             //PNGSIG: 89 50 4E 47 0D 0A 1A 0A or 137, 80, 78, 71, 13, 10, 26, 10
