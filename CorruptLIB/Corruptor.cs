@@ -50,6 +50,7 @@ namespace ZecosMAX.Corrupt
     }
     class PNGCorruptor : Corruptor
     {
+        private Random random = new Random();
         private PNGChunk[] chunks;
         private PNGCorruptType corruptType;
 
@@ -80,12 +81,70 @@ namespace ZecosMAX.Corrupt
             switch (corruptType)
             {
                 case PNGCorruptType.ForwardSwap:
+                    foreach (var item in chunks)
+                    {
+                        if (additional.Length == 3)
+                        {
+                        }
+                        else if (additional.Length == 0)
+                        {
+                            if (new string(item.Type).ToLower() == "idat")
+                            {
+                                int first = random.Next(0, item.Data.Length-2);
+                                int second = first + 1;
+                                Console.WriteLine("f:\t{0}\ns:\t{1}\nl:\t{2}", first, second, item.Data.Length);
+                                Swap(first, second, item.Data);
+                            }
+                        }
+                        else
+                        {
+                            throw new WrongCountOfParametersException("i'm so stupid, that i've throwed that randomly, sorry");
+                        }
+                    }
                     break;
                 case PNGCorruptType.BackwardSwap:
+                    foreach (var item in chunks)
+                    {
+                        if (additional.Length == 3)
+                        {
+                        }
+                        else if (additional.Length == 0)
+                        {
+                            if (new string(item.Type).ToLower() == "idat")
+                            {
+                                int first = random.Next(1, item.Data.Length);
+                                int second = first-1;
+                                Console.WriteLine("f:\t{0}\ns:\t{1}\nl:\t{2}", first, second, item.Data.Length);
+                                Swap(first, second, item.Data);
+                            }
+                        }
+                        else
+                        {
+                            throw new WrongCountOfParametersException("i'm so stupid, that i've throwed that randomly, sorry");
+                        }
+                    }
                     break;
-                case PNGCorruptType.ManualSwap:
-                    break;
-                case PNGCorruptType.AutoSwap:
+                case PNGCorruptType.Swap:
+                    foreach (var item in chunks)
+                    {
+                        if (additional.Length == 3)
+                        {
+                        }
+                        else if (additional.Length == 0)
+                        {
+                            if (new string(item.Type).ToLower() == "idat")
+                            {
+                                int first = random.Next(0, item.Data.Length);
+                                int second = random.Next(0, item.Data.Length);
+                                Console.WriteLine("f:\t{0}\ns:\t{1}\nl:\t{2}", first, second, item.Data.Length);
+                                Swap(first, second, item.Data);
+                            }
+                        }
+                        else
+                        {
+                            throw new WrongCountOfParametersException("i'm so stupid, that i've throwed that randomly, sorry");
+                        }
+                    }
                     break;
                 case PNGCorruptType.Slide:
                     foreach (var item in chunks)
@@ -188,17 +247,8 @@ namespace ZecosMAX.Corrupt
             res = new CorruptState("", 0, byteChanged);
             return res;
         }
-        private void SlideCorrupt(int offset, int numOfIDAT = 1)
-        {
-
-        }
-        private void ChangeCorrupt()
-        {
-
-        }
         private void SwapCorrupt(int first, int second)
         {
-
         }
     }
     /// <summary>
@@ -524,8 +574,7 @@ namespace ZecosMAX.Corrupt
     {
         ForwardSwap,
         BackwardSwap,
-        ManualSwap,
-        AutoSwap,
+        Swap,
         Slide,
         SingleChange,
     }
