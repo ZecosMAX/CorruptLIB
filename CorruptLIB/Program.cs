@@ -15,32 +15,19 @@ namespace CorruptLIB
     {
         static void Main(string[] args)
         {
-            Random random = new Random();
-            Parser parser = new Parser("suckmyPAINIS — копия.png", ImageType.PNG);
-            PNGCorruptor corruptor = parser.CorruptorInstance as PNGCorruptor;
-            while (true)
-            {
-                corruptor.Corrupt(PNGCorruptType.Swap, 0, 0, 3, 0);
-                //res[5].Slide(4);
-                //res[5].recalcCrc();
-                parser.BuildPNG(corruptor.Chunks);
-                corruptor.Resave("builded.png");
-
-                Console.Write("Again? "); var r = Console.ReadLine();
-                if (r == "n")
-                    break;
-            }
-            int max = 6;
-            int min = 0;
-            //for (int i = -10 * max; i < 10 * max; i++)
+            //Parser parser = new Parser("file.png", ImageType.PNG);
+            //PNGCorruptor corruptor = parser.CorruptorInstance as PNGCorruptor;
+            //while (true)
             //{
-            //    //for neg (max - Math.Abs(i % max)) % max
-            //    //for pos (i % max)
-            //    if (i < 0)
-            //        Console.WriteLine((max - Math.Abs(i % max)) % max  + " -- " + i);
-            //    else
-            //        Console.WriteLine(i % max + " -- " + i);
+            //    corruptor.Corrupt(PNGCorruptType.Swap, 0, 0, 3, 0);
+            //    parser.BuildPNG(corruptor.Chunks);
+            //    Corruptor.Resave("builded.png");
+            //    Console.Write("Again? "); var r = Console.ReadLine();
+            //    if (r == "n")
+            //        break;
             //}
+
+            Parser parser = new Parser("file.jpg", ImageType.JPG);
         }
     }
 }
