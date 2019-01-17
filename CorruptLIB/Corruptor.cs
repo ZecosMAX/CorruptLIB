@@ -66,10 +66,6 @@ namespace ZecosMAX.Corrupt
             File.Delete(path);
             Bitmap tmp = new Bitmap(r.Width, r.Height);
 
-            //MessageBox.Show(
-            //    "W: " + r.Width + "\n" +
-            //    "H: " + r.Height + "");
-
             Graphics graphics = Graphics.FromImage(tmp);
 
             graphics.DrawImage(r, 0, 0, r.Width, r.Height);
@@ -124,7 +120,6 @@ namespace ZecosMAX.Corrupt
                             {
                                 int first = random.Next(0, item.Data.Length-2);
                                 int second = first + 1;
-                                //Console.WriteLine("f:\t{0}\ns:\t{1}\nl:\t{2}", first, second, item.Data.Length);
                                 Swap(first, second, item.Data);
                                 byteChanged += 2;
                                 chunkAffected++;
@@ -148,7 +143,6 @@ namespace ZecosMAX.Corrupt
                             {
                                 int first = random.Next(1, item.Data.Length);
                                 int second = first-1;
-                                //Console.WriteLine("f:\t{0}\ns:\t{1}\nl:\t{2}", first, second, item.Data.Length);
                                 Swap(first, second, item.Data);
                                 byteChanged += 2;
                                 chunkAffected++;
@@ -172,6 +166,7 @@ namespace ZecosMAX.Corrupt
                             if (new string(item.Type).ToLower() == "idat")
                             {
                                 if (chunkCount != -1) chunkCounter++;
+
                                 if (!isTarget)
                                 {
                                     if(first == -1)
@@ -181,7 +176,6 @@ namespace ZecosMAX.Corrupt
                                         second = random.Next(0, item.Data.Length);
 
                                     if ((chunkCounter + 1) > chunkCount & chunkCount != -1) break;
-                                    //Console.WriteLine("f:\t{0}\ns:\t{1}\nl:\t{2}", first, second, item.Data.Length);
                                     Swap(first, second, item.Data);
                                     byteChanged += 2;
                                     chunkAffected++;
@@ -212,7 +206,6 @@ namespace ZecosMAX.Corrupt
                             {
                                 int first = random.Next(0, item.Data.Length);
                                 int second = random.Next(0, item.Data.Length);
-                                //Console.WriteLine("f:\t{0}\ns:\t{1}\nl:\t{2}", first, second, item.Data.Length);
                                 Swap(first, second, item.Data);
                                 byteChanged += 2;
                                 chunkAffected++;
@@ -262,10 +255,26 @@ namespace ZecosMAX.Corrupt
                         {
                             if (new string(item.Type).ToLower() == "idat")
                             {
-                                item.Slide(1);
-                                byteChanged += (item.Data.Length);
-                                chunkAffected++;
-                                item.RecalcCrc();
+                                if (chunkCounter++ == 0)
+                                {
+                                    for (int i = 0; i < item.Data.Length / 4096; i++)
+                                    {
+                                        int first = random.Next(0, item.Data.Length);
+                                        int second = random.Next(0, item.Data.Length);
+                                        Swap(first, second, item.Data);
+                                        byteChanged += 2;
+                                    }
+                                    chunkAffected++;
+                                    item.RecalcCrc();
+                                }
+                                else
+                                {         
+                                    item.Slide(1);
+                                    byteChanged += (item.Data.Length);
+                                    chunkAffected++;
+                                    chunkCounter++;
+                                    item.RecalcCrc();
+                                }
                             }
                         }
                         else
@@ -288,7 +297,6 @@ namespace ZecosMAX.Corrupt
                                 if (chunkCount != -1) chunkCounter++;
                                 if (!isTarget) {
                                     if ((chunkCounter + 1) > chunkCount & chunkCount != -1) break;
-                                    Console.WriteLine(chunkCounter);
                                     if (byteCount != -1) for (int i = 0; i < byteCount; i++)
                                         {
                                             item.Change(); byteChanged++;
@@ -303,7 +311,6 @@ namespace ZecosMAX.Corrupt
                                 }      
                                 else {
                                     if ((chunkCounter) == chunkCount & chunkCount != -1) {
-                                        Console.WriteLine(chunkCounter);
                                         item.Change();
                                         byteChanged++;
                                         chunkAffected++;
@@ -327,6 +334,26 @@ namespace ZecosMAX.Corrupt
                             throw new WrongCountOfParametersException("Count of specified parameters must be exactly 3");
                         }
                         
+                    }
+                    break;
+                case PNGCorruptType.SlideOfOnlyFirstChunk:
+                    foreach (var item in chunks)
+                    {
+                        if (additional.Length == 0)
+                        {
+                            if (new string(item.Type).ToLower() == "idat" && chunkCounter == 0)
+                            {
+                                item.Slide(1);
+                                byteChanged += (item.Data.Length);
+                                chunkAffected++;
+                                chunkCounter++;
+                                item.RecalcCrc();
+                            }
+                        }
+                        else
+                        {
+                            throw new YouAreNotASmartKidException("I TOLD YOU NOT TO USE THIS");
+                        }
                     }
                     break;
                 default:
@@ -353,7 +380,6 @@ namespace ZecosMAX.Corrupt
     /// </summary> 
     public class PNGChunk
     {
-        static uint[] crcTable;
         private int length;  //Chunk length
         private char[] type; //4 ASCII Symbols
         private byte[] data; //a chunk data with presented length
@@ -471,12 +497,12 @@ namespace ZecosMAX.Corrupt
         public void Change(int off = -1)
         {
             Random random = new Random();
-            byte newb = 0;
             if (off == -1)
                 data[random.Next(0, data.Length)] = (byte)random.Next(0, 255);
             else
                 data[off] = (byte)random.Next(0, 255);
         }
+        
         /// <summary>
         /// Recalculates CRC32-Checksum of a chunk, really, you don't have to use that, corruptor class make that care of it for you, but if you want, you can, but this'll be a waste of perfomance
         /// </summary>
@@ -490,9 +516,13 @@ namespace ZecosMAX.Corrupt
             CRC = BitConverter.GetBytes(res).Reverse().ToArray();
             //Console.WriteLine(CRC.Aggregate("", (s, b) => s += $"{b:X2}"));
         }
+        public void DestroyStart()
+        {
+
+        }
     }
     /// <summary>
-    /// A class which represents JPG
+    /// A class which represents JPG Block
     /// </summary>
     public class JPGBlock
     {
@@ -580,16 +610,16 @@ namespace ZecosMAX.Corrupt
                 lengthByte[1] = hex[i + 2];
                 lengthByte[0] = hex[i + 3];
                 offset += 4;
-                int dataLength = BitConverter.ToInt32(lengthByte, 0); //parsing lengh of data
-                Console.Write(" : " + dataLength);
+                int dataLength = BitConverter.ToInt32(lengthByte, 0);   //parsing lengh of data
+                                                                        Console.Write(" : " + dataLength);
 
                 name[0] = hex[i + 4];
                 name[1] = hex[i + 5];
                 name[2] = hex[i + 6];
                 name[3] = hex[i + 7];
                 offset += 4;
-                string type = Encoding.ASCII.GetString(name);//parsing type
-                Console.Write(" : " + type);
+                string type = Encoding.ASCII.GetString(name);   //parsing type
+                                                                Console.Write(" : " + type);
 
                 byte[] data = new byte[dataLength];
                 Array.Copy(hex, i + 8, data, 0, dataLength);//copy data to byte array
@@ -599,14 +629,14 @@ namespace ZecosMAX.Corrupt
                 crc[0] = hex[offset];
                 crc[1] = hex[offset + 1];
                 crc[2] = hex[offset + 2];
-                crc[3] = hex[offset + 3];//parsing crc checksum
+                crc[3] = hex[offset + 3];   //parsing crc checksum
                 offset += 4;
-                Console.WriteLine(" : {0}:{1} - {2}:{3} - {4}:{5} - {6}:{7}",
-                    offset, crc[0],
-                    offset + 1, crc[1],
-                    offset + 2, crc[2],
-                    offset + 3, crc[3]
-                    );
+                                            Console.WriteLine(" : {0}:{1} - {2}:{3} - {4}:{5} - {6}:{7}",
+                                                offset, crc[0],
+                                                offset + 1, crc[1],
+                                                offset + 2, crc[2],
+                                                offset + 3, crc[3]
+                                                );
 
                 PNGChunk chunk = new PNGChunk(dataLength, type.ToCharArray(), data, crc);
 
@@ -661,7 +691,7 @@ namespace ZecosMAX.Corrupt
                         datat.Add(hex[j]);
                     }
                     block.Data = datat.ToArray();
-                    Console.WriteLine("at: {2:X2}  \tmark: {0}:\tl:{1}", block.Marker, block.Length, i);
+                    //Console.WriteLine("at: {2:X2}  \tmark: {0}:\tl:{1}", block.Marker, block.Length, i);
                 }
             }
 
@@ -720,6 +750,10 @@ namespace ZecosMAX.Corrupt
                 File.WriteAllBytes("builded.png", bytes.ToArray());
             }
         }
+        public Corruptor GetCorruptorInstance()
+        {
+            return corruptorInstance;
+        }
     }
     /// <summary>
     /// A Enumerable object, containig both yet done types and types that is planned to be added.
@@ -740,7 +774,8 @@ namespace ZecosMAX.Corrupt
         BackwardSwap,
         Swap,
         Slide,
-        SingleChange
+        SingleChange,
+        SlideOfOnlyFirstChunk //pls don't use this
     }
     public enum JPGCorruptType
     {
