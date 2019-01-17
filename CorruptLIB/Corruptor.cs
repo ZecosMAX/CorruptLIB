@@ -28,7 +28,7 @@ namespace ZecosMAX.Corrupt
           System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 
-    class CorruptState
+    public class CorruptState
     {
         private string message;
         private int errorCode;
@@ -45,7 +45,7 @@ namespace ZecosMAX.Corrupt
             this.bytesChanged = bc;
         }
     }
-    class PNGCorruptState : CorruptState
+    public class PNGCorruptState : CorruptState
     {
         private int chunksAffected;
 
@@ -56,7 +56,7 @@ namespace ZecosMAX.Corrupt
             this.chunksAffected = ca;
         }       
     }
-    abstract class Corruptor
+    public abstract class Corruptor
     {
         static public void Resave(string path)
         {
@@ -90,7 +90,7 @@ namespace ZecosMAX.Corrupt
             arr[indexB] = temp;
         }
     }
-    class PNGCorruptor : Corruptor
+    public class PNGCorruptor : Corruptor
     {
         private Random random = new Random();
         private PNGChunk[] chunks;
@@ -124,7 +124,7 @@ namespace ZecosMAX.Corrupt
                             {
                                 int first = random.Next(0, item.Data.Length-2);
                                 int second = first + 1;
-                                Console.WriteLine("f:\t{0}\ns:\t{1}\nl:\t{2}", first, second, item.Data.Length);
+                                //Console.WriteLine("f:\t{0}\ns:\t{1}\nl:\t{2}", first, second, item.Data.Length);
                                 Swap(first, second, item.Data);
                                 byteChanged += 2;
                                 chunkAffected++;
@@ -148,7 +148,7 @@ namespace ZecosMAX.Corrupt
                             {
                                 int first = random.Next(1, item.Data.Length);
                                 int second = first-1;
-                                Console.WriteLine("f:\t{0}\ns:\t{1}\nl:\t{2}", first, second, item.Data.Length);
+                                //Console.WriteLine("f:\t{0}\ns:\t{1}\nl:\t{2}", first, second, item.Data.Length);
                                 Swap(first, second, item.Data);
                                 byteChanged += 2;
                                 chunkAffected++;
@@ -212,7 +212,7 @@ namespace ZecosMAX.Corrupt
                             {
                                 int first = random.Next(0, item.Data.Length);
                                 int second = random.Next(0, item.Data.Length);
-                                Console.WriteLine("f:\t{0}\ns:\t{1}\nl:\t{2}", first, second, item.Data.Length);
+                                //Console.WriteLine("f:\t{0}\ns:\t{1}\nl:\t{2}", first, second, item.Data.Length);
                                 Swap(first, second, item.Data);
                                 byteChanged += 2;
                                 chunkAffected++;
@@ -336,7 +336,7 @@ namespace ZecosMAX.Corrupt
             return res;
         }
     }
-    class JPGCorruptor : Corruptor
+    public class JPGCorruptor : Corruptor
     {
         public CorruptState Corrupt(JPGCorruptType corruptType, JPGCorruptLevel corruptLevel, params int[] additional)
         {
