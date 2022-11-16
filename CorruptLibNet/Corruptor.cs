@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ZecosMAX.Corrupt
+namespace CorruptLibNet
 {
     [Serializable]
     public class YouAreNotASmartKidException : Exception
@@ -54,30 +54,32 @@ namespace ZecosMAX.Corrupt
         public PNGCorruptState(string message, int ec, int bc, int ca) : base(message, ec, bc)
         {
             this.chunksAffected = ca;
-        }       
+        }
     }
     public abstract class Corruptor
     {
         static public void Resave(string path)
         {
-            FileStream fs = new FileStream(path, FileMode.Open, FileAccess.ReadWrite);
-            var r = Image.FromStream(fs);
-            fs.Close();
-            File.Delete(path);
-            Bitmap tmp = new Bitmap(r.Width, r.Height);
+            throw new NotImplementedException("Resave is in process of porting to cross-platform libraries");
 
-            Graphics graphics = Graphics.FromImage(tmp);
+            //FileStream fs = new FileStream(path, FileMode.Open, FileAccess.ReadWrite);
+            //var r = Image.FromStream(fs);
+            //fs.Close();
+            //File.Delete(path);
+            //Bitmap tmp = new Bitmap(r.Width, r.Height);
 
-            graphics.DrawImage(r, 0, 0, r.Width, r.Height);
+            //Graphics graphics = Graphics.FromImage(tmp);
+
+            //graphics.DrawImage(r, 0, 0, r.Width, r.Height);
 
 
-            graphics.Save();
-            tmp.Save(path);
+            //graphics.Save();
+            //tmp.Save(path);
 
-            tmp.Dispose();
-            graphics.Dispose();
+            //tmp.Dispose();
+            //graphics.Dispose();
 
-            r.Dispose();
+            //r.Dispose();
         }
         static public void Swap<T>(int indexA, int indexB, T[] arr)
         {
@@ -118,7 +120,7 @@ namespace ZecosMAX.Corrupt
                         {
                             if (new string(item.Type).ToLower() == "idat")
                             {
-                                int first = random.Next(0, item.Data.Length-2);
+                                int first = random.Next(0, item.Data.Length - 2);
                                 int second = first + 1;
                                 Swap(first, second, item.Data);
                                 byteChanged += 2;
@@ -142,7 +144,7 @@ namespace ZecosMAX.Corrupt
                             if (new string(item.Type).ToLower() == "idat")
                             {
                                 int first = random.Next(1, item.Data.Length);
-                                int second = first-1;
+                                int second = first - 1;
                                 Swap(first, second, item.Data);
                                 byteChanged += 2;
                                 chunkAffected++;
@@ -160,7 +162,7 @@ namespace ZecosMAX.Corrupt
                         if (additional.Length == 4)
                         {
                             bool isTarget = Convert.ToBoolean(additional[3]);
-                            int first = additional[0] == 0 ?  -1 : additional[0];
+                            int first = additional[0] == 0 ? -1 : additional[0];
                             int second = additional[0] == 0 ? -1 : additional[1];
                             int chunkCount = additional[1] == 0 ? -1 : additional[2];
                             if (new string(item.Type).ToLower() == "idat")
@@ -169,7 +171,7 @@ namespace ZecosMAX.Corrupt
 
                                 if (!isTarget)
                                 {
-                                    if(first == -1)
+                                    if (first == -1)
                                         first = random.Next(0, item.Data.Length);
 
                                     if (second == -1)
@@ -227,7 +229,7 @@ namespace ZecosMAX.Corrupt
                             int slideOffset = additional[0] == 0 ? 1 : additional[0];
                             int chunkCount = additional[1] == 0 ? -1 : additional[1];
                             if (new string(item.Type).ToLower() == "idat")
-                            { 
+                            {
                                 if (chunkCount != -1) chunkCounter++;
                                 if (!isTarget)
                                 {
@@ -240,7 +242,8 @@ namespace ZecosMAX.Corrupt
                                 }
                                 else
                                 {
-                                    if ((chunkCounter) == chunkCount & chunkCount != -1) {
+                                    if ((chunkCounter) == chunkCount & chunkCount != -1)
+                                    {
                                         Console.WriteLine(chunkCounter);
                                         item.Slide(slideOffset);
                                         byteChanged += (item.Data.Length);
@@ -268,7 +271,7 @@ namespace ZecosMAX.Corrupt
                                     item.RecalcCrc();
                                 }
                                 else
-                                {         
+                                {
                                     item.Slide(1);
                                     byteChanged += (item.Data.Length);
                                     chunkAffected++;
@@ -295,7 +298,8 @@ namespace ZecosMAX.Corrupt
                             if (new string(item.Type).ToLower() == "idat")
                             {
                                 if (chunkCount != -1) chunkCounter++;
-                                if (!isTarget) {
+                                if (!isTarget)
+                                {
                                     if ((chunkCounter + 1) > chunkCount & chunkCount != -1) break;
                                     if (byteCount != -1) for (int i = 0; i < byteCount; i++)
                                         {
@@ -308,16 +312,18 @@ namespace ZecosMAX.Corrupt
                                     }
                                     chunkAffected++;
                                     item.RecalcCrc();
-                                }      
-                                else {
-                                    if ((chunkCounter) == chunkCount & chunkCount != -1) {
+                                }
+                                else
+                                {
+                                    if ((chunkCounter) == chunkCount & chunkCount != -1)
+                                    {
                                         item.Change();
                                         byteChanged++;
                                         chunkAffected++;
                                         item.RecalcCrc();
                                         break;
                                     }
-                                } 
+                                }
                             }
                         }
                         else if (additional.Length == 0)
@@ -333,7 +339,7 @@ namespace ZecosMAX.Corrupt
                         {
                             throw new WrongCountOfParametersException("Count of specified parameters must be exactly 3");
                         }
-                        
+
                     }
                     break;
                 case PNGCorruptType.SlideOfOnlyFirstChunk:
@@ -432,7 +438,7 @@ namespace ZecosMAX.Corrupt
             List<String> res = new List<string>();//res.Add(string.Fromat(
             res.Add(string.Format("Length: {0}", length));
             res.Add(string.Format("type: {0}", new String(type)));
-            if(isData)
+            if (isData)
                 res.Add(string.Format("Data: {0}", data.Aggregate("", (s, b) => s += $"{b:X2} ")));
             res.Add(string.Format("CRC: {0}", CRC.Aggregate("", (s, b) => s += $"{b:X2}")));
 
@@ -502,7 +508,7 @@ namespace ZecosMAX.Corrupt
             else
                 data[off] = (byte)random.Next(0, 255);
         }
-        
+
         /// <summary>
         /// Recalculates CRC32-Checksum of a chunk, really, you don't have to use that, corruptor class make that care of it for you, but if you want, you can, but this'll be a waste of perfomance
         /// </summary>
@@ -533,7 +539,7 @@ namespace ZecosMAX.Corrupt
         public byte[] Data { get => data; set => data = value; }
         public byte Marker { get => marker; set => marker = value; }
         public ushort Length { get => length; set => length = value; }
-    } 
+    }
     /// <summary>
     /// A class to parse structure of differrent types of image
     /// </summary>
@@ -611,7 +617,7 @@ namespace ZecosMAX.Corrupt
                 lengthByte[0] = hex[i + 3];
                 offset += 4;
                 int dataLength = BitConverter.ToInt32(lengthByte, 0);   //parsing lengh of data
-                                                                        Console.Write(" : " + dataLength);
+                Console.Write(" : " + dataLength);
 
                 name[0] = hex[i + 4];
                 name[1] = hex[i + 5];
@@ -619,7 +625,7 @@ namespace ZecosMAX.Corrupt
                 name[3] = hex[i + 7];
                 offset += 4;
                 string type = Encoding.ASCII.GetString(name);   //parsing type
-                                                                Console.Write(" : " + type);
+                Console.Write(" : " + type);
 
                 byte[] data = new byte[dataLength];
                 Array.Copy(hex, i + 8, data, 0, dataLength);//copy data to byte array
@@ -631,12 +637,12 @@ namespace ZecosMAX.Corrupt
                 crc[2] = hex[offset + 2];
                 crc[3] = hex[offset + 3];   //parsing crc checksum
                 offset += 4;
-                                            Console.WriteLine(" : {0}:{1} - {2}:{3} - {4}:{5} - {6}:{7}",
-                                                offset, crc[0],
-                                                offset + 1, crc[1],
-                                                offset + 2, crc[2],
-                                                offset + 3, crc[3]
-                                                );
+                Console.WriteLine(" : {0}:{1} - {2}:{3} - {4}:{5} - {6}:{7}",
+                    offset, crc[0],
+                    offset + 1, crc[1],
+                    offset + 2, crc[2],
+                    offset + 3, crc[3]
+                    );
 
                 PNGChunk chunk = new PNGChunk(dataLength, type.ToCharArray(), data, crc);
 
@@ -677,14 +683,14 @@ namespace ZecosMAX.Corrupt
                 {
                     continue;
                 }
-                if((hex[i] == 0xFF && hex[i + 1] == 0xD9))
+                if ((hex[i] == 0xFF && hex[i + 1] == 0xD9))
                 {
                     break;
                 }
                 if (hex[i] == 0xFF && hex[i + 1] != 0xFF)
                 {
                     block.Marker = hex[i + 1];
-                    block.Length = (ushort)(hex[i+3] + (hex[i+2] << 8));
+                    block.Length = (ushort)(hex[i + 3] + (hex[i + 2] << 8));
                     List<byte> datat = new List<byte>();
                     for (int j = i; j < i + block.Length - 2; j++)
                     {
@@ -704,11 +710,11 @@ namespace ZecosMAX.Corrupt
         /// <param name="path">A path, where file will be created, if it's null then new file will be created in the same directory where executable is with name "builded.png"</param>
         public void BuildPNG(PNGChunk[] chunks, string path = null)
         {
-            
+
             //PNGSIG: 89 50 4E 47 0D 0A 1A 0A or 137, 80, 78, 71, 13, 10, 26, 10
             List<byte> bytes = new List<byte>();
             bytes.AddRange(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 });
-            foreach(var item in chunks)
+            foreach (var item in chunks)
             {
                 bytes.AddRange(BitConverter.GetBytes(item.Length).Reverse());
                 bytes.AddRange(Encoding.ASCII.GetBytes(item.Type));
